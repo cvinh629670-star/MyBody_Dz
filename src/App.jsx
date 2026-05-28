@@ -7,27 +7,7 @@ const DISCIPLINE_QUOTES = [
   { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
   { text: "What hurts today makes you stronger tomorrow.", author: "Jay Cutler" },
   { text: "Suffering is temporary. Regret lasts forever.", author: "Arnold Schwarzenegger" },
-  { text: "Success isn't always about greatness. It's about consistency.", author: "Dwayne Johnson" },
-  { text: "No pressure, no diamonds.", author: "Thomas Carlyle" },
-  { text: "Dreams don't work unless you do.", author: "John C. Maxwell" },
-  { text: "Small disciplines repeated daily lead to great achievements.", author: "John C. Maxwell" },
-  { text: "The pain you feel today will be the strength you feel tomorrow.", author: "Unknown" },
-  { text: "A little progress each day adds up to big results.", author: "Satya Nani" },
-  { text: "Stay patient and trust your journey.", author: "Unknown" },
-  { text: "Push yourself because no one else is going to do it for you.", author: "Unknown" },
-  { text: "Your future is created by what you do today, not tomorrow.", author: "Robert Kiyosaki" },
-  { text: "Consistency beats motivation.", author: "Unknown" },
-  { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
-  { text: "You become what you repeat.", author: "James Clear" },
-  { text: "Hard choices, easy life. Easy choices, hard life.", author: "Jerzy Gregorek" },
-  { text: "Comfort is the enemy of progress.", author: "P.T. Barnum" },
-  { text: "The body achieves what the mind believes.", author: "Unknown" },
-  { text: "Winners train. Losers complain.", author: "Unknown" },
-  { text: "One day or day one. You decide.", author: "Unknown" },
-  { text: "Motivation gets you started. Discipline keeps you going.", author: "Jim Ryun" },
-  { text: "Be stronger than your excuses.", author: "Unknown" },
-  { text: "The hardest lift of all is lifting yourself off the couch.", author: "Unknown" },
-  { text: "Train like a beast, look like a beauty.", author: "Unknown" }
+  { text: "Success isn't always about greatness. It's about consistency.", author: "Dwayne Johnson" }
 ];
 
 // --- THƯ VIỆN BÀI TẬP GỐC ---
@@ -43,7 +23,6 @@ const INITIAL_EXERCISE_LIBRARY = [
   { id: 'wcr', name: 'Wrist Curl', category: 'Cẳng Tay' },
 ];
 
-// --- ĐÃ SỬA: CẤU TRÚC LẠI LABEL HIỂN THỊ TIẾNG VIỆT CHUẨN ---
 const DAYS_OF_WEEK = [
   { id: 'Mon', label: 'Thứ Hai' }, 
   { id: 'Tue', label: 'Thứ Ba' }, 
@@ -58,6 +37,30 @@ const DAYS_OF_WEEK = [
 const getVietnameseDayLabel = (dayId) => {
   const found = DAYS_OF_WEEK.find(d => d.id === dayId);
   return found ? found.label : dayId;
+};
+
+// --- ĐÃ THÊM: HÀM ĐỔI MÀU NỀN TAG THEO TỪNG NHÓM CƠ ĐẶC TRƯNG ---
+const getMuscleTagClass = (category) => {
+  switch (category) {
+    case 'Ngực':
+      return 'bg-red-600 text-white';
+    case 'Lưng':
+      return 'bg-emerald-600 text-white';
+    case 'Vai':
+      return 'bg-blue-600 text-white';
+    case 'Tay Trước':
+      return 'bg-purple-600 text-white';
+    case 'Tay Sau':
+      return 'bg-pink-500 text-white';
+    case 'Chân':
+      return 'bg-orange-500 text-white';
+    case 'Bụng':
+      return 'bg-cyan-600 text-white';
+    case 'Cẳng Tay':
+      return 'bg-amber-600 text-white';
+    default:
+      return 'bg-zinc-700 text-zinc-200';
+  }
 };
 
 const generateEmptyTwelveMonths = (year) => {
@@ -341,7 +344,6 @@ export default function App() {
         <header className="flex justify-between items-start mb-4 flex-shrink-0">
           <div>
             <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400">MyBody_Dz</h1>
-            {/* ĐÃ SỬA: DÙNG HÀM BIẾN ĐỔI TIẾNG VIỆT ĐỂ KHÔNG BỊ "Thứ Thu" */}
             <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-1 font-semibold">
               <Calendar size={13} className="text-cyberBlue" />
               <span>Hôm nay: {getVietnameseDayLabel(todayId)}</span>
@@ -397,7 +399,10 @@ export default function App() {
                 <div key={item.id} className="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col gap-1.5">
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-xs font-black text-zinc-300 truncate">{item.name}</span>
-                    <span className="text-[7.5px] font-black uppercase bg-amber-400 text-zinc-950 px-1.5 py-0.5 rounded-md flex-shrink-0">{item.category}</span>
+                    {/* CẬP NHẬT: TAG ĐỔI MÀU THEO NHÓM CƠ Ở TRANG CHỦ */}
+                    <span className={`text-[7.5px] font-black uppercase px-1.5 py-0.5 rounded-md flex-shrink-0 tracking-wider shadow-sm ${getMuscleTagClass(item.category)}`}>
+                      {item.category}
+                    </span>
                   </div>
                   <div className="grid grid-cols-4 gap-1 text-center">
                     <div className="flex flex-col items-center gap-0.5">
@@ -468,7 +473,6 @@ export default function App() {
           <header className="flex items-center justify-between mb-5 mt-2 flex-shrink-0">
             <div className="flex items-center gap-4">
               <button onClick={() => setCurrentView('home')} className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400"><ArrowLeft size={18} /></button>
-              {/* ĐÃ SỬA: CHỖ TIÊU ĐỀ LỊCH TẬP THEO TỪNG NGÀY TRỰC QUAN HƠN */}
               <h2 className="text-base font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyberBlue to-zinc-400">
                 Lịch {getVietnameseDayLabel(selectedDay)}
               </h2>
@@ -487,7 +491,8 @@ export default function App() {
                       <span className="text-xs font-black text-zinc-200 truncate">{item.name}</span>
                       <button onClick={() => setWeeklyRoutineConfig(p => ({ ...p, [selectedDay]: p[selectedDay].filter(id => id !== item.id) }))} className="text-zinc-600 hover:text-red-400 p-0.5 flex-shrink-0 transition-colors"><X size={13} /></button>
                     </div>
-                    <span className="text-[8px] font-black uppercase bg-amber-400 text-zinc-950 px-2 py-0.5 rounded-md tracking-wider shadow-md">
+                    {/* CẬP NHẬT: TAG ĐỔI MÀU RIÊNG BIỆT THEO NHÓM CƠ Ở DANH SÁCH CHI TIẾT */}
+                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md tracking-wider shadow-md ${getMuscleTagClass(item.category)}`}>
                       {item.category}
                     </span>
                   </div>
@@ -508,7 +513,6 @@ export default function App() {
           </section>
         </div>
 
-        {/* ĐÃ SỬA: THANH CHUYỂN TAB FOOTER GIỜ LÀ THỨ HAI, THỨ BA... ĐẦY ĐỦ VÀ GỌN GÀNG */}
         <footer className="pt-2 border-t border-zinc-900 flex-shrink-0">
           <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-1 flex justify-between gap-0.5">
             {DAYS_OF_WEEK.map(day => (
@@ -592,7 +596,7 @@ export default function App() {
               <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-zinc-500 uppercase">Cân Ban Đầu</span><div className="flex items-center gap-0.5 mt-1"><input type="text" value={initialWeight} onChange={(e) => setInitialWeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-zinc-400 py-0.5 focus:outline-none" /><span className="text-[8px] text-zinc-600 font-mono">KG</span></div></div>
               <div className="bg-zinc-950 p-2 rounded-xl border border-deepRed/20 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-deepRed uppercase">Cân Hiện Tại</span><div className="flex items-center gap-0.5 mt-1"><input type="text" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-white py-0.5 focus:outline-none" /><span className="text-[8px] text-zinc-500 font-mono">KG</span></div></div>
               <div className="bg-zinc-950 p-2 rounded-xl border border-purple-500/20 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-purple-400 uppercase">Chiều Cao</span><div className="flex items-center gap-0.5 mt-1"><input type="text" value={userHeight} onChange={(e) => setUserHeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-white py-0.5 focus:outline-none" /><span className="text-[8px] text-zinc-500 font-mono">CM</span></div></div>
-              <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-zinc-400 uppercase">Chỉ Số BMI</span><span className={`text-sm font-mono font-black mt-1 ${bmiScore.colorBg}`}>{bmiScore}</span><span className={`text-[7px] font-bold uppercase mt-0.5 block ${bmiInfo.labelColor}`}>{bmiInfo.label}</span></div>
+              <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-zinc-400 uppercase">Chỉ Số BMI</span><span className={`text-sm font-mono font-black mt-1 ${bmiInfo.colorBg}`}>{bmiScore}</span><span className={`text-[7px] font-bold uppercase mt-0.5 block ${bmiInfo.labelColor}`}>{bmiInfo.label}</span></div>
             </div>
             <div className="w-full h-28 mt-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
               <div className="min-w-[440px] h-full">
