@@ -1,286 +1,359 @@
 import React, { useState, useEffect } from 'react';
-import { Dumbbell, Utensils, BookOpen, Quote, Calendar, Plus, HelpCircle, X, Sparkles, Trash2, Target, ArrowLeft, Search, CheckCircle2, Wrench, Scale, LineChart as ChartIcon, TrendingUp, Zap } from 'lucide-react';
-// Import các component biểu đồ từ Recharts
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Dumbbell, Utensils, BookOpen, Calendar, Plus, HelpCircle, X, Scale, LineChart as ChartIcon, TrendingUp, Zap, ChevronLeft, ChevronRight, Edit3, ArrowLeft } from 'lucide-react';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 
-// --- 1. KHO QUOTE TRUYỀN ĐỘNG LỰC ---
+// --- KHO QUOTE TRUYỀN ĐỘNG LỰC ---
 const DISCIPLINE_QUOTES = [
   { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
   { text: "What hurts today makes you stronger tomorrow.", author: "Jay Cutler" },
   { text: "Suffering is temporary. Regret lasts forever.", author: "Arnold Schwarzenegger" },
-  { text: "Success isn't always about greatness. It's about consistency.", author: "Dwayne Johnson" }
+  { text: "Success isn't always about greatness. It's about consistency.", author: "Dwayne Johnson" },
+  { text: "No pressure, no diamonds.", author: "Thomas Carlyle" },
+  { text: "Dreams don't work unless you do.", author: "John C. Maxwell" },
+  { text: "Small disciplines repeated daily lead to great achievements.", author: "John C. Maxwell" },
+  { text: "The pain you feel today will be the strength you feel tomorrow.", author: "Unknown" },
+  { text: "A little progress each day adds up to big results.", author: "Satya Nani" },
+  { text: "Stay patient and trust your journey.", author: "Unknown" },
+  { text: "Push yourself because no one else is going to do it for you.", author: "Unknown" },
+  { text: "Your future is created by what you do today, not tomorrow.", author: "Robert Kiyosaki" },
+  { text: "Consistency beats motivation.", author: "Unknown" },
+  { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
+  { text: "You become what you repeat.", author: "James Clear" },
+  { text: "Hard choices, easy life. Easy choices, hard life.", author: "Jerzy Gregorek" },
+  { text: "Comfort is the enemy of progress.", author: "P.T. Barnum" },
+  { text: "The body achieves what the mind believes.", author: "Unknown" },
+  { text: "Winners train. Losers complain.", author: "Unknown" },
+  { text: "One day or day one. You decide.", author: "Unknown" },
+  { text: "Motivation gets you started. Discipline keeps you going.", author: "Jim Ryun" },
+  { text: "Be stronger than your excuses.", author: "Unknown" },
+  { text: "The hardest lift of all is lifting yourself off the couch.", author: "Unknown" },
+  { text: "Train like a beast, look like a beauty.", author: "Unknown" }
 ];
 
-// --- 2. CƠ SỞ DỮ LIỆU DINH DƯỠNG GỐC ---
-const DEFAULT_FOOD_DATABASE = {
-  "uc ga": { calo: 165, protein: 31, fat: 3.6, carb: 0 },
-  "ức gà": { calo: 165, protein: 31, fat: 3.6, carb: 0 },
-  "trung": { calo: 155, protein: 13, fat: 11, carb: 1.1 },
-  "trứng": { calo: 155, protein: 13, fat: 11, carb: 1.1 },
-  "com": { calo: 130, protein: 2.7, fat: 0.3, carb: 28 },
-  "cơm": { calo: 130, protein: 2.7, fat: 0.3, carb: 28 },
-  "bo": { calo: 250, protein: 26, fat: 15, carb: 0 },
-  "bò": { calo: 250, protein: 26, fat: 15, carb: 0 },
-  "whey": { calo: 120, protein: 25, fat: 1, carb: 2 },
+// --- THƯ VIỆN BÀI TẬP GỐC ---
+const INITIAL_EXERCISE_LIBRARY = [
+  { id: 'bp', name: 'Benchpress', category: 'Ngực' },
+  { id: 'pu', name: 'Push-up', category: 'Ngực' },
+  { id: 'sq', name: 'Squat', category: 'Chân' },
+  { id: 'dl', name: 'Deadlift', category: 'Lưng' },
+  { id: 'op', name: 'Overhead Press', category: 'Vai' },
+  { id: 'bc', name: 'Bicep Curl', category: 'Tay Trước' },
+  { id: 'te', name: 'Tricep Extension', category: 'Tay Sau' },
+  { id: 'pl', name: 'Plank', category: 'Bụng' },
+  { id: 'wcr', name: 'Wrist Curl', category: 'Cẳng Tay' },
+];
+
+// --- ĐÃ SỬA: CẤU TRÚC LẠI LABEL HIỂN THỊ TIẾNG VIỆT CHUẨN ---
+const DAYS_OF_WEEK = [
+  { id: 'Mon', label: 'Thứ Hai' }, 
+  { id: 'Tue', label: 'Thứ Ba' }, 
+  { id: 'Wed', label: 'Thứ Tư' },
+  { id: 'Thu', label: 'Thứ Năm' }, 
+  { id: 'Fri', label: 'Thứ Sáu' }, 
+  { id: 'Sat', label: 'Thứ Bảy' }, 
+  { id: 'Sun', label: 'Chủ Nhật' }
+];
+
+// HÀM CHUYỂN ĐỔI ID NGÀY HỆ THỐNG SANG TEXT TIẾNG VIỆT CHUẨN
+const getVietnameseDayLabel = (dayId) => {
+  const found = DAYS_OF_WEEK.find(d => d.id === dayId);
+  return found ? found.label : dayId;
 };
 
-// --- 3. THƯ VIỆN BÀI TẬP GỐC BAN ĐẦU ---
-const INITIAL_EXERCISE_LIBRARY = [
-  { id: 'bp', name: 'Benchpress', category: 'Compound' },
-  { id: 'sq', name: 'Squat', category: 'Compound' },
-  { id: 'dl', name: 'Deadlift', category: 'Compound' },
-  { id: 'op', name: 'Overhead Press', category: 'Compound' },
-  { id: 'pu', name: 'Push-up', category: 'Ngực' },
-  { id: 'bc', name: 'Bicep Curl', category: 'Tay' },
-  { id: 'pl', name: 'Plank', category: 'Bụng' },
-];
-
-const DAYS_OF_WEEK = [
-  { id: 'Mon', label: 'Mon' }, { id: 'Tue', label: 'Tue' }, { id: 'Wed', label: 'Wed' },
-  { id: 'Thu', label: 'Thu' }, { id: 'Fri', label: 'Fri' }, { id: 'Sat', label: 'Sat' }, { id: 'Sun', label: 'Sun' }
-];
-
-const EXERCISE_CATEGORIES = ['Compound', 'Ngực', 'Lưng', 'Chân', 'Vai', 'Tay', 'Bụng'];
-
-// --- DỮ LIỆU BIỂU ĐỒ CÂN NẶNG THEO TỪNG THÁNG TRONG NĂM ---
-const MONTHLY_WEIGHT_DATA = [
-  { month: 'Tháng 1', weight: 53.0 },
-  { month: 'Tháng 2', weight: 54.5 },
-  { month: 'Tháng 3', weight: 56.2 },
-  { month: 'Tháng 4', weight: 58.0 },
-  { month: 'Tháng 5', weight: 59.8 }
-];
-
-const WORKOUT_VOLUME_DATA = [
-  { day: 'Mon', volume: 2400 }, { day: 'Tue', volume: 1800 },
-  { day: 'Wed', volume: 3200 }, { day: 'Thu', volume: 1500 },
-  { day: 'Fri', volume: 2800 }, { day: 'Sat', volume: 0 }, { day: 'Sun', volume: 0 }
-];
-
-const PROGRESSIVE_OVERLOAD_DATA = [
-  { week: 'Tuần 1', weight: 50 }, { week: 'Tuần 2', weight: 52.5 },
-  { week: 'Tuần 3', weight: 55 }, { week: 'Tuần 4', weight: 57.5 },
-  { week: 'Tuần 5', weight: 60 }
-];
+const generateEmptyTwelveMonths = (year) => {
+  const shortYear = year.toString().slice(-2);
+  return [
+    { id: 0, month: 'Tháng 1', label: `Th1/${shortYear}`, weight: null },
+    { id: 1, month: 'Tháng 2', label: `Th2/${shortYear}`, weight: null },
+    { id: 2, month: 'Tháng 3', label: `Th3/${shortYear}`, weight: null },
+    { id: 3, month: 'Tháng 4', label: `Th4/${shortYear}`, weight: null },
+    { id: 4, month: 'Tháng 5', label: `Th5/${shortYear}`, weight: null },
+    { id: 5, month: 'Tháng 6', label: `Th6/${shortYear}`, weight: null },
+    { id: 6, month: 'Tháng 7', label: `Th7/${shortYear}`, weight: null },
+    { id: 7, month: 'Tháng 8', label: `Th8/${shortYear}`, weight: null },
+    { id: 8, month: 'Tháng 9', label: `Th9/${shortYear}`, weight: null },
+    { id: 9, month: 'Tháng 10', label: `Th10/${shortYear}`, weight: null },
+    { id: 10, month: 'Tháng 11', label: `Th11/${shortYear}`, weight: null },
+    { id: 11, month: 'Tháng 12', label: `Th12/${shortYear}`, weight: null }
+  ];
+};
 
 export default function App() {
-  const getSystemDayId = () => {
-    const dayIndex = new Date().getDay();
-    const mapping = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return mapping[dayIndex];
-  };
-  const todayId = getSystemDayId();
+  const todayId = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
 
-  // ---- STATE QUẢN LÝ ĐIỀU HƯỚNG GIAO DIỆN ----
+  // ---- ĐIỀU HƯỚNG GIAO DIỆN ----
   const [currentView, setCurrentView] = useState('home'); 
   const [selectedDay, setSelectedDay] = useState(todayId); 
-  const [currentQuote, setCurrentQuote] = useState({ text: "Train, eat", author: "Dz" });
+  const [currentQuote, setCurrentQuote] = useState({ text: "Train hard, eat clean.", author: "Dz" });
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
-  const [isCustomExerciseModalOpen, setIsCustomExerciseModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isAddExerciseModalOpen, setIsAddExerciseModalOpen] = useState(false);
 
-  // ---- STATE THEO DÕI HÌNH THỂ (ĐỒNG BỘ MULTI-USER) ----
-  const [initialWeight, setInitialWeight] = useState(() => localStorage.getItem('mybody_initial_weight') || '53.0'); 
-  const [currentWeight, setCurrentWeight] = useState(() => localStorage.getItem('mybody_user_weight') || '59.8');
-  const [userHeight, setUserHeight] = useState(() => localStorage.getItem('mybody_user_height') || '170'); 
+  // ---- STATE QUẢN LÝ BIỂU ĐỒ ----
+  const [selectedChartYear, setSelectedChartYear] = useState("2026");
+  const [selectedOverloadYear, setSelectedOverloadYear] = useState("2026");
+  const [selectedOverloadExercise, setSelectedOverloadExercise] = useState("bp");
 
-  // Form tạo dữ liệu
-  const [newExerciseName, setNewExerciseName] = useState('');
-  const [newExerciseCategory, setNewExerciseCategory] = useState('Compound');
-  const [newMeal, setNewMeal] = useState({ name: '', calo: '', protein: '', fat: '', carb: '' });
+  const [isEditWeightModalOpen, setIsEditWeightModalOpen] = useState(false);
+  const [isEditOverloadModalOpen, setIsEditOverloadModalOpen] = useState(false);
 
-  // ---- STATE DỮ LIỆU LOCALSTORAGE ----
+  // ---- STATE HÌNH THỂ ----
+  const [initialWeight, setInitialWeight] = useState(() => localStorage.getItem('mybody_initial_weight') || '0'); 
+  const [currentWeight, setCurrentWeight] = useState(() => localStorage.getItem('mybody_user_weight') || '0');
+  const [userHeight, setUserHeight] = useState(() => localStorage.getItem('mybody_user_height') || '0'); 
+
+  const [weightHistoryData, setWeightHistoryData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mybody_multi_year_weight_data');
+      return saved ? JSON.parse(saved) : {
+        "2025": generateEmptyTwelveMonths(2025),
+        "2026": generateEmptyTwelveMonths(2026)
+      };
+    } catch {
+      return { "2025": generateEmptyTwelveMonths(2025), "2026": generateEmptyTwelveMonths(2026) };
+    }
+  });
+
+  const [overloadHistoryData, setOverloadHistoryData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mybody_overload_history_data_v3');
+      return saved ? JSON.parse(saved) : {
+        "bp": { "2026": generateEmptyTwelveMonths(2026) },
+        "sq": { "2026": generateEmptyTwelveMonths(2026) },
+        "dl": { "2026": generateEmptyTwelveMonths(2026) },
+        "op": { "2026": generateEmptyTwelveMonths(2026) }
+      };
+    } catch {
+      return {};
+    }
+  });
+
+  const [tempWeightList, setTempWeightList] = useState([]);
+  const [tempOverloadList, setTempOverloadList] = useState([]);
+
+  // ---- STATE MEALS & ROUTINES ----
   const [customFoodDb, setCustomFoodDb] = useState(() => {
-    const saved = localStorage.getItem('mybody_food_db');
-    return saved ? JSON.parse(saved) : DEFAULT_FOOD_DATABASE;
+    try {
+      const saved = localStorage.getItem('mybody_food_db');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
   });
 
   const [meals, setMeals] = useState(() => {
-    const saved = localStorage.getItem('mybody_meals_today_v6');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'Ức gà nướng', calo: 165, protein: 31, fat: 3.6, carb: 0 },
-      { id: 2, name: 'Cơm trắng', calo: 130, protein: 2.7, fat: 0.3, carb: 28 },
-    ];
+    try {
+      const saved = localStorage.getItem('mybody_meals_today_v6');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [exerciseLibrary, setExerciseLibrary] = useState(() => {
-    const saved = localStorage.getItem('mybody_exercise_library_v6');
-    return saved ? JSON.parse(saved) : INITIAL_EXERCISE_LIBRARY;
+    try {
+      const saved = localStorage.getItem('mybody_exercise_library');
+      return saved ? JSON.parse(saved) : INITIAL_EXERCISE_LIBRARY;
+    } catch {
+      return INITIAL_EXERCISE_LIBRARY;
+    }
   });
-
+  
   const [weeklyRoutineConfig, setWeeklyRoutineConfig] = useState(() => {
-    const saved = localStorage.getItem('mybody_weekly_routine_config_v6');
-    return saved ? JSON.parse(saved) : { 
-      Mon: ['bp', 'pu'], Tue: ['sq'], Wed: ['bp', 'pu', 'bc'], Thu: ['dl'], Fri: ['op', 'pl'], Sat: [], Sun: [] 
-    };
+    try {
+      const saved = localStorage.getItem('mybody_weekly_config_v2');
+      return saved ? JSON.parse(saved) : { 
+        Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: []                 
+      };
+    } catch {
+      return { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
+    }
   });
 
   const [routinesData, setRoutinesData] = useState(() => {
-    const saved = localStorage.getItem('mybody_routines_data_v6');
-    return saved ? JSON.parse(saved) : {
-      'bp': { weight: '60', sets: ['12', '10', '8'] },
-      'pu': { weight: 'B.W', sets: ['20', '20', '15'] },
-      'bc': { weight: '12', sets: ['12', '12', '10'] }
-    };
+    try {
+      const saved = localStorage.getItem('mybody_routines_data_v7');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
   });
+
+  const [newMeal, setNewMeal] = useState({ name: '', calo: '', protein: '', fat: '', carb: '' });
+  const [newExercise, setNewExercise] = useState({ name: '', category: 'Ngực' });
 
   // ---- ĐỒNG BỘ DỮ LIỆU ----
   useEffect(() => { localStorage.setItem('mybody_food_db', JSON.stringify(customFoodDb)); }, [customFoodDb]);
   useEffect(() => { localStorage.setItem('mybody_meals_today_v6', JSON.stringify(meals)); }, [meals]);
-  useEffect(() => { localStorage.setItem('mybody_exercise_library_v6', JSON.stringify(exerciseLibrary)); }, [exerciseLibrary]);
-  useEffect(() => { localStorage.setItem('mybody_weekly_routine_config_v6', JSON.stringify(weeklyRoutineConfig)); }, [weeklyRoutineConfig]);
-  useEffect(() => { localStorage.setItem('mybody_routines_data_v6', JSON.stringify(routinesData)); }, [routinesData]);
   useEffect(() => { localStorage.setItem('mybody_user_weight', currentWeight); }, [currentWeight]);
   useEffect(() => { localStorage.setItem('mybody_user_height', userHeight); }, [userHeight]);
   useEffect(() => { localStorage.setItem('mybody_initial_weight', initialWeight); }, [initialWeight]);
+  useEffect(() => { localStorage.setItem('mybody_multi_year_weight_data', JSON.stringify(weightHistoryData)); }, [weightHistoryData]);
+  useEffect(() => { localStorage.setItem('mybody_overload_history_data_v3', JSON.stringify(overloadHistoryData)); }, [overloadHistoryData]);
+  useEffect(() => { localStorage.setItem('mybody_routines_data_v7', JSON.stringify(routinesData)); }, [routinesData]);
+  useEffect(() => { localStorage.setItem('mybody_exercise_library', JSON.stringify(exerciseLibrary)); }, [exerciseLibrary]);
+  useEffect(() => { localStorage.setItem('mybody_weekly_config_v2', JSON.stringify(weeklyRoutineConfig)); }, [weeklyRoutineConfig]);
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * DISCIPLINE_QUOTES.length);
-    setCurrentQuote(DISCIPLINE_QUOTES[randomIndex]);
+    setCurrentQuote(DISCIPLINE_QUOTES[Math.floor(Math.random() * DISCIPLINE_QUOTES.length)]);
   }, []);
 
-  // ---- LOGIC TỰ ĐỘNG TÍNH BMI & PHÂN LOẠI MÀU SẮC PHẢN HỒI ----
-  const heightInMeters = Number(userHeight) / 100;
-  const bmiScore = (heightInMeters > 0) ? Number((Number(currentWeight) / (heightInMeters * heightInMeters)).toFixed(1)) : 0;
+  const handleRoutineDataChange = (exerciseId, field, value, setIndex = null) => {
+    setRoutinesData(prev => {
+      const current = prev[exerciseId] || { weight: '0', sets: ['0', '0', '0'] };
+      if (setIndex !== null) {
+        const updatedSets = [...(current.sets || ['0', '0', '0'])];
+        updatedSets[setIndex] = value;
+        return { ...prev, [exerciseId]: { ...current, sets: updatedSets } };
+      } else {
+        return { ...prev, [exerciseId]: { ...current, [field]: value } };
+      }
+    });
+  };
 
-  const getBMIDetails = (bmi) => {
+  // ---- LOGIC TÍNH TOÁN BMI ----
+  const bmiScore = (Number(userHeight) > 0) ? Number((Number(currentWeight) / ((Number(userHeight)/100) * (Number(userHeight)/100))).toFixed(1)) : 0;
+  const bmiInfo = ((bmi) => {
     if (bmi === 0) return { label: 'Chưa rõ', colorBg: 'text-zinc-400', labelColor: 'text-zinc-500' };
-    if (bmi < 18.5) {
-      return { label: 'Quá gầy', colorBg: 'text-red-500', labelColor: 'text-red-500/90' };
-    } else if (bmi >= 18.5 && bmi <= 22.9) {
-      return { label: 'Tốt', colorBg: 'text-green-500', labelColor: 'text-green-500/90' };
-    } else if (bmi >= 23 && bmi <= 24.9) {
-      return { label: 'Thừa cân', colorBg: 'text-blue-500', labelColor: 'text-amber-500' }; // Số màu xanh dương, chữ nhỏ màu vàng hổ phách
-    } else {
-      return { label: 'Béo phì', colorBg: 'text-red-500', labelColor: 'text-red-500/90' };
-    }
-  };
-  const bmiInfo = getBMIDetails(bmiScore);
+    if (bmi < 18.5) return { label: 'Quá gầy', colorBg: 'text-red-500', labelColor: 'text-red-500/90' };
+    if (bmi >= 18.5 && bmi <= 22.9) return { label: 'Tốt', colorBg: 'text-green-500', labelColor: 'text-green-500/90' };
+    if (bmi >= 23 && bmi <= 24.9) return { label: 'Thừa cân', colorBg: 'text-blue-400', labelColor: 'text-amber-500' }; 
+    return { label: 'Béo phì', colorBg: 'text-red-500', labelColor: 'text-red-500/90' };
+  })(bmiScore);
 
-  // ---- HÀM TÍNH TDEE DYNAMIC THEO NGÀY ----
-  const getEstimatedTDEEForDay = (dayId) => {
-    const weightNum = Number(currentWeight) || 60;
-    const heightNum = Number(userHeight) || 170;
-    const baseBMR = (10 * weightNum) + (6.25 * heightNum) - (5 * 20) + 5; 
-    const exerciseCount = (weeklyRoutineConfig[dayId] || []).length;
-    const activityMultiplier = exerciseCount === 0 ? 1.2 : 1.55; 
-    return Math.round(baseBMR * activityMultiplier);
-  };
+  const todayTDEE = Math.round(((10 * (Number(currentWeight)||60)) + (6.25 * (Number(userHeight)||170)) - (5 * 20) + 5) * ((weeklyRoutineConfig[todayId] || []).length === 0 ? 1.2 : 1.55));
+  const targetProtein = (Number(currentWeight) * 2.2).toFixed(0);
 
-  const todayTDEE = getEstimatedTDEEForDay(todayId);
-  const selectedDayTDEE = getEstimatedTDEEForDay(selectedDay);
+  // ---- FOODS ----
+  const totalMacros = meals.reduce((acc, curr) => ({
+    calo: acc.calo + (curr.calo||0), protein: acc.protein + (curr.protein||0), fat: acc.fat + (curr.fat||0), carb: acc.carb + (curr.carb||0)
+  }), { calo: 0, protein: 0, fat: 0, carb: 0 });
 
-  // ---- HANDLERS DINH DƯỠNG ----
   const handleFoodNameChange = (e) => {
     const name = e.target.value;
     setNewMeal(prev => ({ ...prev, name }));
-    const lowerName = name.toLowerCase().trim();
-    if (!lowerName) return;
-    if (customFoodDb[lowerName]) {
-      const stats = customFoodDb[lowerName];
-      setNewMeal(prev => ({ ...prev, calo: stats.calo, protein: stats.protein, fat: stats.fat, carb: stats.carb }));
+    const lower = name.toLowerCase().trim();
+    if (customFoodDb[lower]) {
+      const s = customFoodDb[lower];
+      setNewMeal(prev => ({ ...prev, calo: s.calo, protein: s.protein, fat: s.fat, carb: s.carb }));
     }
   };
 
   const handleAddMeal = (e) => {
     e.preventDefault();
-    if (!newMeal.name) return;
-    const mealNameClean = newMeal.name.trim();
-    const keyName = mealNameClean.toLowerCase();
-    const caloVal = Number(newMeal.calo) || 0;
-    const proVal = Number(newMeal.protein) || 0;
-    const fatVal = Number(newMeal.fat) || 0;
-    const carbVal = Number(newMeal.carb) || 0;
-
-    setMeals(prev => [...prev, { id: Date.now(), name: mealNameClean, calo: caloVal, protein: proVal, fat: fatVal, carb: carbVal }]);
-    if (!customFoodDb[keyName]) {
-      setCustomFoodDb(prev => ({ ...prev, [keyName]: { calo: caloVal, protein: proVal, fat: fatVal, carb: carbVal } }));
+    if (!newMeal.name.trim()) return;
+    const n = newMeal.name.trim();
+    const mealObj = { id: Date.now(), name: n, calo: Number(newMeal.calo)||0, protein: Number(newMeal.protein)||0, fat: Number(newMeal.fat)||0, carb: Number(newMeal.carb)||0 };
+    setMeals(prev => [...prev, mealObj]);
+    if (!customFoodDb[n.toLowerCase()]) {
+      setCustomFoodDb(prev => ({ ...prev, [n.toLowerCase()]: { calo: mealObj.calo, protein: mealObj.protein, fat: mealObj.fat, carb: mealObj.carb } }));
     }
     setNewMeal({ name: '', calo: '', protein: '', fat: '', carb: '' });
     setIsMealModalOpen(false);
   };
 
-  const totalMacros = meals.reduce((acc, curr) => {
-    return { calo: acc.calo + curr.calo, protein: acc.protein + curr.protein, fat: acc.fat + curr.fat, carb: acc.carb + curr.carb };
-  }, { calo: 0, protein: 0, fat: 0, carb: 0 });
-
-  // ---- HANDLERS BÀI TẬP ----
-  const toggleExerciseForDay = (exerciseId) => {
-    setWeeklyRoutineConfig(prev => {
-      const currentDayList = prev[selectedDay] || [];
-      const isExist = currentDayList.includes(exerciseId);
-      return { ...prev, [selectedDay]: isExist ? currentDayList.filter(id => id !== exerciseId) : [...currentDayList, exerciseId] };
-    });
-  };
-
-  const handleCreateCustomExercise = (e) => {
-    e.preventDefault();
-    if (!newExerciseName.trim()) return;
-    const customId = 'custom_' + Date.now();
-    setExerciseLibrary(prev => [...prev, { id: customId, name: newExerciseName.trim(), category: newExerciseCategory }]);
-    setWeeklyRoutineConfig(prev => ({ ...prev, [selectedDay]: [...(prev[selectedDay] || []), customId] }));
-    setNewExerciseName('');
-    setIsCustomExerciseModalOpen(false);
-  };
-
-  const handleDeleteExerciseFromLibrary = (exerciseId, e) => {
-    e.stopPropagation();
-    setExerciseLibrary(prev => prev.filter(ex => ex.id !== exerciseId));
-    setWeeklyRoutineConfig(prev => {
-      const updatedConfig = {};
-      Object.keys(prev).forEach(day => { updatedConfig[day] = prev[day].filter(id => id !== exerciseId); });
-      return updatedConfig;
-    });
-  };
-
-  const handleRoutineDataChange = (exerciseId, field, value, setIndex = null) => {
-    setRoutinesData(prev => {
-      const existing = prev[exerciseId] || { weight: '', sets: ['', '', ''] };
-      if (setIndex !== null) {
-        const newSets = [...existing.sets];
-        newSets[setIndex] = value;
-        return { ...prev, [exerciseId]: { ...existing, sets: newSets } };
-      }
-      return { ...prev, [exerciseId]: { ...existing, [field]: value } };
-    });
-  };
-
   const getRoutinesForDay = (dayId) => {
-    const exerciseIds = weeklyRoutineConfig[dayId] || [];
-    return exerciseIds.map(id => {
-      const exInfo = exerciseLibrary.find(e => e.id === id) || { name: 'Bài tập' };
-      const savedData = routinesData[id] || { weight: '', sets: ['', '', ''] };
-      return { id, name: exInfo.name, ...savedData };
+    return (weeklyRoutineConfig[dayId] || []).map(id => {
+      const foundEx = exerciseLibrary.find(e => e.id === id) || { name: 'Bài tập', category: 'Chưa rõ' };
+      return {
+        id,
+        name: foundEx.name,
+        category: foundEx.category,
+        ...(routinesData[id] || { weight: '', sets: ['', '', ''] })
+      };
     });
+  };
+
+  const handleCreateExercise = (e) => {
+    e.preventDefault();
+    if (!newExercise.name.trim()) return;
+    const uniqueId = 'ex_' + Date.now();
+    const newExObj = { id: uniqueId, name: newExercise.name.trim(), category: newExercise.category };
+    
+    setExerciseLibrary(prev => [...prev, newExObj]);
+    setWeeklyRoutineConfig(prev => ({ ...prev, [selectedDay]: [...(prev[selectedDay] || []), uniqueId] }));
+    setRoutinesData(prev => ({ ...prev, [uniqueId]: { weight: '0', sets: ['10', '10', '10'] } }));
+    
+    setNewExercise({ name: '', category: 'Ngực' });
+    setIsAddExerciseModalOpen(false);
+  };
+
+  const calculateMuscleVolumeData = () => {
+    const muscleGroups = { 'Ngực': 0, 'Vai': 0, 'Tay Sau': 0, 'Lưng': 0, 'Tay Trước': 0, 'Chân': 0, 'Bụng': 0, 'Cẳng Tay': 0 };
+    try {
+      Object.keys(weeklyRoutineConfig).forEach(day => {
+        const exerciseIds = weeklyRoutineConfig[day] || [];
+        exerciseIds.forEach(id => {
+          const exercise = exerciseLibrary.find(e => e.id === id);
+          if (exercise && muscleGroups[exercise.category] !== undefined) {
+            const stats = routinesData[id] || { weight: '0', sets: ['0', '0', '0'] };
+            
+            const safeSets = Array.isArray(stats.sets) ? stats.sets : [];
+            const totalReps = safeSets.reduce((sum, rep) => {
+              const repNum = parseInt(rep, 10);
+              return sum + (isNaN(repNum) ? 0 : repNum);
+            }, 0);
+            
+            muscleGroups[exercise.category] += totalReps;
+          }
+        });
+      });
+    } catch (err) {
+      console.error("Lỗi tính tổng số Reps tuần: ", err);
+    }
+    return Object.keys(muscleGroups).map(key => ({ muscle: key, volume: muscleGroups[key] }));
+  };
+
+  const muscleVolumeDataset = calculateMuscleVolumeData();
+
+  const openWeightEditModal = () => {
+    setTempWeightList([...(weightHistoryData[selectedChartYear] || generateEmptyTwelveMonths(Number(selectedChartYear)))]);
+    setIsEditWeightModalOpen(true);
+  };
+  const saveWeightHistory = () => {
+    setWeightHistoryData(prev => ({ ...prev, [selectedChartYear]: tempWeightList }));
+    setIsEditWeightModalOpen(false);
+  };
+
+  const currentOverloadDataset = () => {
+    const exData = overloadHistoryData[selectedOverloadExercise] || {};
+    return exData[selectedOverloadYear] || generateEmptyTwelveMonths(Number(selectedOverloadYear));
+  };
+  const openOverloadEditModal = () => {
+    setTempOverloadList([...currentOverloadDataset()]);
+    setIsEditOverloadModalOpen(true);
+  };
+  const saveOverloadHistory = () => {
+    setOverloadHistoryData(prev => ({
+      ...prev, [selectedOverloadExercise]: { ...(prev[selectedOverloadExercise] || {}), [selectedOverloadYear]: tempOverloadList }
+    }));
+    setIsEditOverloadModalOpen(false);
   };
 
   // ==========================================
-  // GIAO DIỆN 1: TRANG CHỦ (HOME)
+  // VIEW TRANG CHỦ
   // ==========================================
   if (currentView === 'home') {
-    const todayRoutines = getRoutinesForDay(todayId);
-
     return (
-      <div className="h-screen bg-background text-zinc-100 flex flex-col p-4 max-w-md mx-auto relative overflow-hidden select-none animate-in fade-in duration-300">
+      <div className="h-screen bg-background text-zinc-100 flex flex-col p-4 max-w-md mx-auto relative overflow-hidden select-none">
         <div className="absolute top-[-10%] left-[-20%] w-72 h-72 bg-deepRed/15 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[20%] right-[-20%] w-72 h-72 bg-cyberBlue/15 rounded-full blur-[120px] pointer-events-none" />
 
         <header className="flex justify-between items-start mb-4 flex-shrink-0">
           <div>
             <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400">MyBody_Dz</h1>
+            {/* ĐÃ SỬA: DÙNG HÀM BIẾN ĐỔI TIẾNG VIỆT ĐỂ KHÔNG BỊ "Thứ Thu" */}
             <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-1 font-semibold">
               <Calendar size={13} className="text-cyberBlue" />
-              <span>Hôm nay: Thứ {todayId === 'Sun' ? 'Chủ Nhật' : todayId}</span>
+              <span>Hôm nay: {getVietnameseDayLabel(todayId)}</span>
             </div>
           </div>
-          <div className="bg-cardBg/90 border border-zinc-800/80 rounded-xl p-3 max-w-[180px] shadow-lg backdrop-blur-sm">
+          <div className="bg-cardBg/90 border border-zinc-800/80 rounded-xl p-3 max-w-[180px] shadow-lg">
             <p className="text-[11px] italic font-medium text-zinc-300 leading-tight">"{currentQuote.text}"</p>
             <span className="text-[9px] text-cyberBlue font-bold block mt-1 text-right">- {currentQuote.author} -</span>
           </div>
         </header>
 
         <main className="grid grid-cols-2 gap-3 flex-1 min-h-0 items-stretch mb-4">
-          {/* CỘT MEALS */}
           <section className="gradient-border rounded-2xl p-3 flex flex-col bg-cardBg/90 shadow-2xl min-h-0">
             <div className="flex items-center justify-between mb-3 border-b border-zinc-800/80 pb-2 flex-shrink-0">
               <div className="flex items-center gap-1.5"><Utensils size={15} className="text-deepRed" /><h2 className="text-xs font-black uppercase tracking-widest text-zinc-300">Meals</h2></div>
@@ -293,14 +366,17 @@ export default function App() {
                   <span className="text-xs font-bold text-zinc-200 truncate pr-4 block">{meal.name}</span>
                   <span className="text-[10px] text-deepRed font-black font-mono">{meal.calo} kcal</span>
                   <div className="grid grid-cols-3 gap-0.5 text-[8px] text-zinc-500 font-mono mt-0.5 pt-0.5 border-t border-zinc-900">
-                    <span>P:{meal.protein}g</span><span>F:{meal.fat}g</span><span>C:{meal.carb}g</span>
+                    <span>P:{(meal.protein||0)}g</span><span>F:{(meal.fat||0)}g</span><span>C:{(meal.carb||0)}g</span>
                   </div>
                 </div>
               ))}
+              {meals.length === 0 && (
+                <p className="text-[10px] text-zinc-600 text-center pt-8 italic">Chưa có món ăn nào...</p>
+              )}
             </div>
             <div className="flex-shrink-0 pt-2 border-t border-zinc-800/80 flex flex-col gap-1.5 bg-zinc-950/40 p-2 rounded-xl">
               <div className="flex justify-between items-center">
-                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1"><Target size={11} className="text-deepRed" /> Total</span>
+                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1">Total</span>
                 <span className="text-xs font-black text-deepRed font-mono">{totalMacros.calo} kcal</span>
               </div>
               <div className="grid grid-cols-3 gap-1 text-center text-[9px] font-mono border-t border-zinc-900/60 pt-1.5">
@@ -311,24 +387,35 @@ export default function App() {
             </div>
           </section>
 
-          {/* CỘT ROUTINE */}
           <section className="gradient-border rounded-2xl p-3 flex flex-col bg-cardBg/90 shadow-2xl min-h-0">
             <div className="flex items-center justify-between mb-3 border-b border-zinc-800/80 pb-2 flex-shrink-0">
               <div className="flex items-center gap-1.5"><Dumbbell size={15} className="text-cyberBlue" /><h2 className="text-xs font-black uppercase tracking-widest text-zinc-300">Routine</h2></div>
-              <button onClick={() => { setCurrentView('routine-view'); setSelectedDay(todayId); }} className="p-1 bg-cyberBlue/20 hover:bg-cyberBlue/40 border border-cyberBlue/30 rounded-lg text-cyberBlue cursor-pointer"><HelpCircle size={14} /></button>
+              <button onClick={() => setCurrentView('routine-view')} className="p-1 bg-cyberBlue/20 hover:bg-cyberBlue/40 border border-cyberBlue/30 rounded-lg text-cyberBlue cursor-pointer"><HelpCircle size={14} /></button>
             </div>
             <div className="flex-1 overflow-y-auto pr-0.5 space-y-2 min-h-0 custom-scrollbar">
-              {todayRoutines.map(item => (
+              {getRoutinesForDay(todayId).map(item => (
                 <div key={item.id} className="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col gap-1.5">
-                  <span className="text-xs font-black text-zinc-300 truncate">{item.name}</span>
-                  <div className="grid grid-cols-4 gap-1 items-center">
-                    <input type="text" value={item.weight} placeholder="KG" onChange={(e) => handleRoutineDataChange(item.id, 'weight', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-center text-cyberBlue py-0.5 rounded focus:outline-none placeholder-zinc-600" />
-                    {item.sets.map((rep, sIdx) => (
-                      <input key={sIdx} type="text" value={rep} placeholder={`S${sIdx + 1}`} onChange={(e) => handleRoutineDataChange(item.id, null, e.target.value, sIdx)} className="w-full bg-zinc-900 border border-zinc-800 text-[10px] text-center text-zinc-300 py-0.5 rounded focus:outline-none placeholder-zinc-600" />
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs font-black text-zinc-300 truncate">{item.name}</span>
+                    <span className="text-[7.5px] font-black uppercase bg-amber-400 text-zinc-950 px-1.5 py-0.5 rounded-md flex-shrink-0">{item.category}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1 text-center">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-[7px] text-zinc-500 font-black uppercase">Tạ</span>
+                      <input type="text" value={item.weight} placeholder="KG" onChange={(e) => handleRoutineDataChange(item.id, 'weight', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-center text-cyberBlue py-0.5 rounded focus:outline-none" />
+                    </div>
+                    {(item.sets || []).map((rep, sIdx) => (
+                      <div key={sIdx} className="flex flex-col items-center gap-0.5">
+                        <span className="text-[7px] text-zinc-500 font-bold uppercase">S{sIdx + 1}</span>
+                        <input type="text" value={rep} placeholder={`S${sIdx + 1}`} onChange={(e) => handleRoutineDataChange(item.id, null, e.target.value, sIdx)} className="w-full bg-zinc-900 border border-zinc-800 text-[10px] text-center text-zinc-300 py-0.5 rounded focus:outline-none" />
+                      </div>
                     ))}
                   </div>
                 </div>
               ))}
+              {getRoutinesForDay(todayId).length === 0 && (
+                <p className="text-[10px] text-zinc-600 text-center pt-8 italic">Hôm nay trống lịch tập...</p>
+              )}
             </div>
           </section>
         </main>
@@ -339,78 +426,136 @@ export default function App() {
             <span className="relative flex items-center gap-2"><BookOpen size={16} />Sổ theo dõi</span>
           </button>
         </footer>
+
+        {isMealModalOpen && (
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <form onSubmit={handleAddMeal} className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3">
+              <div className="flex justify-between items-center"><h3 className="text-xs font-black uppercase text-deepRed">Thêm món ăn nhanh</h3><button type="button" onClick={() => setIsMealModalOpen(false)} className="text-zinc-500 hover:text-white"><X size={16} /></button></div>
+              <input type="text" placeholder="Tên món..." value={newMeal.name} onChange={handleFoodNameChange} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-deepRed" required />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Calories</label>
+                  <input type="number" value={newMeal.calo} onChange={e=>setNewMeal(p=>({...p,calo:e.target.value}))} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-center font-mono focus:outline-none focus:border-deepRed" required />
+                </div>
+                <div>
+                  <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Protein (g)</label>
+                  <input type="number" value={newMeal.protein} onChange={e=>setNewMeal(p=>({...p,protein:e.target.value}))} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-center font-mono focus:outline-none focus:border-deepRed" required />
+                </div>
+                <div>
+                  <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Fat (g)</label>
+                  <input type="number" value={newMeal.fat} onChange={e=>setNewMeal(p=>({...p,fat:e.target.value}))} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-center font-mono focus:outline-none focus:border-deepRed" />
+                </div>
+                <div>
+                  <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Carb (g)</label>
+                  <input type="number" value={newMeal.carb} onChange={e=>setNewMeal(p=>({...p,carb:e.target.value}))} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-center font-mono focus:outline-none focus:border-deepRed" />
+                </div>
+              </div>
+              <button type="submit" className="w-full bg-deepRed text-white py-2.5 rounded-xl font-black text-xs uppercase tracking-wider mt-2">Xác nhận nạp</button>
+            </form>
+          </div>
+        )}
       </div>
     );
   }
 
   // ==========================================
-  // GIAO DIỆN ROUTINE VIEW & EDIT LIBRARY (CHẤN CHỈNH ỔN ĐỊNH)
+  // VIEW LỊCH TẬP CÁC THỨ
   // ==========================================
-  if (currentView === 'routine-view' || currentView === 'edit-library') {
-    if (currentView === 'routine-view') {
-      const targetDayRoutines = getRoutinesForDay(selectedDay);
-      return (
-        <div className="h-screen bg-background text-zinc-100 p-4 max-w-md mx-auto flex flex-col justify-between relative overflow-hidden select-none">
-          <div>
-            <header className="flex items-center justify-between mb-5 mt-2 flex-shrink-0"><div className="flex items-center gap-4"><button onClick={() => setCurrentView('home')} className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400"><ArrowLeft size={18} /></button><h2 className="text-base font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyberBlue to-zinc-400">Lịch Tập Các Thứ</h2></div><button onClick={() => setCurrentView('edit-library')} className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400"><Wrench size={18} /></button></header>
-            <section className="gradient-border rounded-2xl p-4 bg-cardBg/90 shadow-2xl h-[480px] overflow-y-auto custom-scrollbar">
-              <div className="space-y-3">
-                {targetDayRoutines.map(item => (
-                  <div key={item.id} className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex flex-col gap-2.5">
-                    <span className="text-xs font-black text-zinc-200">{item.name}</span>
-                    <div className="grid grid-cols-4 gap-2 text-center font-mono">
-                      <div className="bg-zinc-900 rounded-lg py-2 border border-zinc-800"><div className="text-[7px] text-zinc-600 font-bold">Mức Tạ</div><div className="text-xs font-black text-cyberBlue mt-0.5">{item.weight ? `${item.weight} kg` : '-'}</div></div>
-                      {item.sets.map((rep, idx) => <div key={idx} className="bg-zinc-900/40 rounded-lg py-2"><div className="text-[7px] text-zinc-600">SET {idx+1}</div><div className="text-xs font-black text-zinc-400 mt-0.5">{rep || '-'}</div></div>)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-          <footer className="pt-2 border-t border-zinc-900 flex-shrink-0"><div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-1 flex justify-between">{DAYS_OF_WEEK.map(day => (<button key={day.id} onClick={() => setSelectedDay(day.id)} className={`flex-1 py-2 text-center rounded-lg text-[10px] font-black ${selectedDay === day.id ? 'bg-gradient-to-br from-deepRed to-red-800 text-white font-black scale-105' : 'text-zinc-500'}`}>{day.label}</button>))}</div></footer>
-        </div>
-      );
-    }
-
-    if (currentView === 'edit-library') {
-      return (
-        <div className="h-screen bg-background text-zinc-100 p-5 max-w-md mx-auto flex flex-col justify-between relative overflow-hidden select-none animate-in slide-in-from-right duration-300">
-          <div className="flex flex-col flex-1 min-h-0">
-            <header className="flex items-center justify-between mb-5 mt-2 flex-shrink-0"><div className="flex items-center gap-4"><button onClick={() => setCurrentView('routine-view')} className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400"><ArrowLeft size={18} /></button><h2 className="text-base font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-zinc-400">Quản Lý & Sửa Bài</h2></div><button onClick={() => setIsCustomExerciseModalOpen(true)} className="p-2 bg-gradient-to-br from-cyberBlue to-blue-700 text-white rounded-xl"><Plus size={18} /></button></header>
-            <div className="relative mb-4 flex-shrink-0"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600" size={14} /><input type="text" placeholder="Tìm bài tập trong kho..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs" /></div>
-            <div className="flex-1 overflow-y-auto space-y-4 pr-0.5 min-h-0 custom-scrollbar mb-2">
-              {EXERCISE_CATEGORIES.map(cat => {
-                const filtered = exerciseLibrary.filter(ex => ex.category === cat && ex.name.toLowerCase().includes(searchQuery.toLowerCase()));
-                if (filtered.length === 0) return null;
-                return (
-                  <div key={cat} className="space-y-1.5">
-                    <h3 className="text-[9px] font-black text-cyberBlue uppercase tracking-widest pl-1">{cat}</h3>
-                    <div className="grid gap-2">
-                      {filtered.map(ex => {
-                        const isDayActive = (weeklyRoutineConfig[selectedDay] || []).includes(ex.id);
-                        return (
-                          <div key={ex.id} onClick={() => toggleExerciseForDay(ex.id)} className={`w-full flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all ${isDayActive ? 'bg-cyberBlue/10 border-cyberBlue/40 shadow-md' : 'bg-zinc-900/40 border-zinc-800/60 hover:border-zinc-700'}`}>
-                            <span className="text-xs font-bold">{ex.name}</span>
-                            <div className="flex items-center gap-3"><button onClick={(e) => handleDeleteExerciseFromLibrary(ex.id, e)} className="p-1.5 bg-zinc-950 border border-zinc-800 text-zinc-600 hover:text-red-400 rounded-lg"><Trash2 size={13} /></button><div className={isDayActive ? 'text-cyberBlue' : 'text-zinc-800'}><CheckCircle2 size={18} fill={isDayActive ? 'currentColor' : 'none'} strokeWidth={1.5} /></div></div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+  if (currentView === 'routine-view') {
+    return (
+      <div className="h-screen bg-background text-zinc-100 p-4 max-w-md mx-auto flex flex-col justify-between relative overflow-hidden select-none">
+        <div className="flex flex-col flex-1 min-h-0">
+          <header className="flex items-center justify-between mb-5 mt-2 flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setCurrentView('home')} className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400"><ArrowLeft size={18} /></button>
+              {/* ĐÃ SỬA: CHỖ TIÊU ĐỀ LỊCH TẬP THEO TỪNG NGÀY TRỰC QUAN HƠN */}
+              <h2 className="text-base font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyberBlue to-zinc-400">
+                Lịch {getVietnameseDayLabel(selectedDay)}
+              </h2>
             </div>
-          </div>
+            <button onClick={() => setIsAddExerciseModalOpen(true)} className="p-2 bg-cyberBlue/20 hover:bg-cyberBlue/40 border border-cyberBlue/30 rounded-xl text-cyberBlue cursor-pointer flex items-center justify-center">
+              <Plus size={16} strokeWidth={3} />
+            </button>
+          </header>
+
+          <section className="gradient-border rounded-2xl p-4 bg-cardBg/90 shadow-2xl flex-1 overflow-y-auto custom-scrollbar mb-3 min-h-0">
+            <div className="space-y-3">
+              {getRoutinesForDay(selectedDay).map(item => (
+                <div key={item.id} className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex flex-col gap-2.5">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 max-w-[70%]">
+                      <span className="text-xs font-black text-zinc-200 truncate">{item.name}</span>
+                      <button onClick={() => setWeeklyRoutineConfig(p => ({ ...p, [selectedDay]: p[selectedDay].filter(id => id !== item.id) }))} className="text-zinc-600 hover:text-red-400 p-0.5 flex-shrink-0 transition-colors"><X size={13} /></button>
+                    </div>
+                    <span className="text-[8px] font-black uppercase bg-amber-400 text-zinc-950 px-2 py-0.5 rounded-md tracking-wider shadow-md">
+                      {item.category}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-center font-mono">
+                    <div className="bg-zinc-900 rounded-lg py-2 border border-zinc-800"><div className="text-[7px] text-zinc-600 font-bold">Mức Tạ</div><div className="text-xs font-black text-cyberBlue mt-0.5">{item.weight ? `${item.weight} kg` : '-'}</div></div>
+                    {(item.sets || []).map((rep, idx) => <div key={idx} className="bg-zinc-900/40 rounded-lg py-2"><div className="text-[7px] text-zinc-600">SET {idx+1}</div><div className="text-xs font-black text-zinc-400 mt-0.5">{rep || '-'}</div></div>)}
+                  </div>
+                </div>
+              ))}
+              {getRoutinesForDay(selectedDay).length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-center text-zinc-500 py-20">
+                  <Dumbbell size={32} className="text-zinc-700 mb-2 stroke-[1.5]" />
+                  <p className="text-xs font-bold">Hôm nay trống bài tập!</p>
+                  <p className="text-[10px] text-zinc-600 mt-0.5">Nhấn nút (+) ở góc phải để thiết lập lịch tập.</p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
-      );
-    }
+
+        {/* ĐÃ SỬA: THANH CHUYỂN TAB FOOTER GIỜ LÀ THỨ HAI, THỨ BA... ĐẦY ĐỦ VÀ GỌN GÀNG */}
+        <footer className="pt-2 border-t border-zinc-900 flex-shrink-0">
+          <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-1 flex justify-between gap-0.5">
+            {DAYS_OF_WEEK.map(day => (
+              <button 
+                key={day.id} 
+                onClick={() => setSelectedDay(day.id)} 
+                className={`flex-1 py-2 text-center rounded-lg text-[9px] font-black tracking-tighter ${selectedDay === day.id ? 'bg-gradient-to-br from-deepRed to-red-800 text-white scale-105' : 'text-zinc-500'}`}
+              >
+                {day.label}
+              </button>
+            ))}
+          </div>
+        </footer>
+
+        {/* MODAL THÊM BÀI TẬP VÀO LỊCH */}
+        {isAddExerciseModalOpen && (
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <form onSubmit={handleCreateExercise} className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-800">
+                <h3 className="text-xs font-black uppercase text-cyberBlue">Thêm bài tập vào {getVietnameseDayLabel(selectedDay)}</h3>
+                <button type="button" onClick={() => setIsAddExerciseModalOpen(false)} className="text-zinc-500 hover:text-white"><X size={16} /></button>
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-bold uppercase block mb-1">Tên bài tập</label>
+                <input type="text" placeholder="Ví dụ: Incline Dumbbell Benchpress..." value={newExercise.name} onChange={e => setNewExercise(p => ({ ...p, name: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-cyberBlue" required />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-bold uppercase block mb-1">Nhóm cơ chính</label>
+                <select value={newExercise.category} onChange={e => setNewExercise(p => ({ ...p, category: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-300 focus:outline-none">
+                  <option value="Ngực">Ngực</option><option value="Vai">Vai</option><option value="Tay Sau">Tay Sau</option>
+                  <option value="Lưng">Lưng</option><option value="Tay Trước">Tay Trước</option><option value="Chân">Chân</option>
+                  <option value="Bụng">Bụng</option><option value="Cẳng Tay">Cẳng Tay</option>
+                </select>
+              </div>
+              <button type="submit" className="w-full bg-cyberBlue text-white py-2.5 rounded-xl font-black text-xs uppercase tracking-wider mt-2">Xác nhận thêm bài</button>
+            </form>
+          </div>
+        )}
+      </div>
+    );
   }
 
   // ==========================================
-  // GIAO DIỆN 4: TRANG SỔ THEO DÕI (ANALYTICS VIEW) - DYNAMIC BMI COLOR & MONTHLY CHART
+  // VIEW SỔ THEO DÕI (ANALYTICS)
   // ==========================================
   return (
-    <div className="h-screen bg-background text-zinc-100 p-4 max-w-md mx-auto flex flex-col justify-between relative overflow-hidden select-none animate-in slide-in-from-bottom duration-300">
+    <div className="h-screen bg-background text-zinc-100 p-4 max-w-md mx-auto flex flex-col justify-between relative overflow-hidden select-none">
       <div className="absolute top-[-10%] left-[-20%] w-72 h-72 bg-purple-900/10 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="flex flex-col flex-1 min-h-0">
@@ -424,112 +569,140 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto pr-0.5 space-y-4 min-h-0 custom-scrollbar mb-2">
           
-          {/* MỤC 1: CHỈ SỐ CƠ THỂ PHÂN CHIA 4 Ô ĐỒNG BỘ */}
+          <div className="gradient-border rounded-2xl p-3.5 bg-gradient-to-br from-cardBg via-zinc-950 to-zinc-900 border border-amber-500/20 shadow-xl flex flex-col gap-3">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 border-b border-zinc-800/80 pb-2"><Zap size={14} className="text-amber-400" /> Cân bằng Dinh dưỡng Hiện Tại</span>
+            <div className="space-y-2.5">
+              <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-900 grid grid-cols-2 gap-4">
+                <div className="text-center border-r border-zinc-900"><div className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Mục tiêu (TDEE)</div><div className="text-base font-mono font-black text-amber-400 mt-0.5">{todayTDEE} <span className="text-[8px] text-zinc-500 font-normal">kcal</span></div></div>
+                <div className="text-center"><div className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Đã Nạp Hôm Nay</div><div className="text-base font-mono font-black text-orange-400 mt-0.5">{totalMacros.calo} <span className="text-[8px] text-zinc-500 font-normal">kcal</span></div></div>
+              </div>
+              <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-900 grid grid-cols-2 gap-4">
+                <div className="text-center border-r border-zinc-900"><div className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Mục tiêu Protein</div><div className="text-base font-mono font-black text-emerald-400 mt-0.5">{targetProtein} <span className="text-[8px] text-zinc-500 font-normal">g</span></div></div>
+                <div className="text-center"><div className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Đã Nạp Hôm Nay</div><div className="text-base font-mono font-black text-teal-400 mt-0.5">{totalMacros.protein} <span className="text-[8px] text-zinc-500 font-normal">g</span></div></div>
+              </div>
+            </div>
+          </div>
+
           <div className="gradient-border rounded-2xl p-3.5 bg-cardBg/90 flex flex-col gap-3 shadow-xl">
-            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 border-b border-zinc-800/80 pb-2">
-              <Scale size={14} className="text-deepRed" /> Chỉ số hình thể & Cân nặng
-            </span>
-
+            <div className="flex justify-between items-center border-b border-zinc-800/80 pb-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5"><Scale size={14} className="text-deepRed" /> Lịch sử & Chỉ số hình thể</span>
+              <button onClick={openWeightEditModal} className="p-1 px-2 bg-zinc-950 text-zinc-400 hover:text-deepRed border border-zinc-800 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 cursor-pointer"><Edit3 size={10} /> Sửa số liệu</button>
+            </div>
             <div className="grid grid-cols-2 gap-2 text-center">
-              {/* Ô 1: CÂN NẶNG BAN ĐẦU - ĐÃ MỞ KHÓA CHO PHÉP ĐIỀU CHỈNH ĐỂ DÙNG NHIỀU NGƯỜI */}
-              <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center">
-                <span className="text-[8px] font-black text-zinc-500 uppercase">Cân Ban Đầu</span>
-                <div className="flex items-center gap-0.5 mt-1">
-                  <input type="text" value={initialWeight} onChange={(e) => setInitialWeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-zinc-400 py-0.5 focus:border-zinc-700" />
-                  <span className="text-[8px] text-zinc-600 font-mono">KG</span>
-                </div>
-              </div>
-
-              {/* Ô 2: CÂN NẶNG HIỆN TẠI */}
-              <div className="bg-zinc-950 p-2 rounded-xl border border-deepRed/20 flex flex-col items-center justify-center">
-                <span className="text-[8px] font-black text-deepRed uppercase">Cân Hiện Tại</span>
-                <div className="flex items-center gap-0.5 mt-1">
-                  <input type="text" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-white py-0.5 focus:border-deepRed" />
-                  <span className="text-[8px] text-zinc-500 font-mono">KG</span>
-                </div>
-              </div>
-
-              {/* Ô 3: CHIỀU CAO */}
-              <div className="bg-zinc-950 p-2 rounded-xl border border-purple-500/20 flex flex-col items-center justify-center">
-                <span className="text-[8px] font-black text-purple-400 uppercase">Chiều Cao</span>
-                <div className="flex items-center gap-0.5 mt-1">
-                  <input type="text" value={userHeight} onChange={(e) => setUserHeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-white py-0.5 focus:border-purple-500" />
-                  <span className="text-[8px] text-zinc-500 font-mono">CM</span>
-                </div>
-              </div>
-
-              {/* Ô 4: CHỈ SỐ BMI DYNAMIC TỰ THAY ĐỔI MÀU SẮC THEO ĐIỀU KIỆN CHUẨN */}
-              <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center relative">
-                <span className="text-[8px] font-black text-zinc-400 uppercase">Chỉ Số BMI</span>
-                <span className={`text-sm font-mono font-black mt-1 ${bmiInfo.colorBg}`}>{bmiScore}</span>
-                <span className={`text-[7px] font-bold uppercase mt-0.5 block ${bmiInfo.labelColor}`}>{bmiInfo.label}</span>
+              <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-zinc-500 uppercase">Cân Ban Đầu</span><div className="flex items-center gap-0.5 mt-1"><input type="text" value={initialWeight} onChange={(e) => setInitialWeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-zinc-400 py-0.5 focus:outline-none" /><span className="text-[8px] text-zinc-600 font-mono">KG</span></div></div>
+              <div className="bg-zinc-950 p-2 rounded-xl border border-deepRed/20 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-deepRed uppercase">Cân Hiện Tại</span><div className="flex items-center gap-0.5 mt-1"><input type="text" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-white py-0.5 focus:outline-none" /><span className="text-[8px] text-zinc-500 font-mono">KG</span></div></div>
+              <div className="bg-zinc-950 p-2 rounded-xl border border-purple-500/20 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-purple-400 uppercase">Chiều Cao</span><div className="flex items-center gap-0.5 mt-1"><input type="text" value={userHeight} onChange={(e) => setUserHeight(e.target.value)} className="w-12 bg-zinc-900 border border-zinc-800 rounded text-center text-sm font-mono font-black text-white py-0.5 focus:outline-none" /><span className="text-[8px] text-zinc-500 font-mono">CM</span></div></div>
+              <div className="bg-zinc-950 p-2 rounded-xl border border-zinc-900 flex flex-col items-center justify-center"><span className="text-[8px] font-black text-zinc-400 uppercase">Chỉ Số BMI</span><span className={`text-sm font-mono font-black mt-1 ${bmiScore.colorBg}`}>{bmiScore}</span><span className={`text-[7px] font-bold uppercase mt-0.5 block ${bmiInfo.labelColor}`}>{bmiInfo.label}</span></div>
+            </div>
+            <div className="w-full h-28 mt-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
+              <div className="min-w-[440px] h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={weightHistoryData[selectedChartYear] || generateEmptyTwelveMonths(Number(selectedChartYear))} margin={{ top: 10, right: 10, left: -35, bottom: 5 }}>
+                    <defs><linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/><stop offset="95%" stopColor="#ef4444" stopOpacity={0}/></linearGradient></defs>
+                    <XAxis dataKey="label" tick={{fontSize: 8, fill: '#a1a1aa', fontWeight: 'bold'}} axisLine={false} tickLine={false} />
+                    <YAxis domain={['dataMin - 3', 'dataMax + 3']} hide={true} />
+                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: 9 }} />
+                    <Area type="monotone" dataKey="weight" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#colorWeight)" connectNulls={true} dot={{ fill: '#ef4444', r: 2.5 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
-
-            {/* BIỂU ĐỒ THEO DÕI CÂN NẶNG TỪNG THÁNG TRONG NĂM */}
-            <div className="w-full h-20 mt-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={MONTHLY_WEIGHT_DATA}>
-                  <XAxis dataKey="month" tick={{fontSize: 7, fill: '#52525b'}} stroke="#27272a" />
-                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: 10 }} />
-                  <Line type="monotone" dataKey="weight" stroke="#7f1d1d" strokeWidth={2.5} dot={{ fill: '#7f1d1d', r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="flex items-center justify-center gap-8 bg-zinc-950 py-1.5 rounded-xl border border-zinc-900/60">
+              <button onClick={() => setSelectedChartYear((Number(selectedChartYear)-1).toString())} className="p-1 px-2 rounded-lg border border-zinc-800 text-zinc-400 cursor-pointer"><ChevronLeft size={14} strokeWidth={3} /></button>
+              <span className="text-xs font-black font-mono tracking-widest text-zinc-200">Năm {selectedChartYear}</span>
+              <button onClick={() => { const n = (Number(selectedChartYear)+1).toString(); if(!weightHistoryData[n]) { weightHistoryData[n] = generateEmptyTwelveMonths(Number(n)); } setSelectedChartYear(n); }} className="p-1 px-2 rounded-lg border border-zinc-800 text-zinc-400 cursor-pointer"><ChevronRight size={14} strokeWidth={3} /></button>
             </div>
           </div>
 
-          {/* MỤC 2: KHỐI HIỂN THỊ TDEE BIẾN THIÊN THEO LỊCH TẬP */}
-          <div className="gradient-border rounded-2xl p-3.5 bg-gradient-to-br from-cardBg via-zinc-950 to-zinc-900 border border-amber-500/20 shadow-xl flex flex-col gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5 border-b border-zinc-800/80 pb-2">
-              <Zap size={14} className="text-amber-400 animate-pulse" /> Dự kiến Calo cần nạp (TDEE Dynamic)
-            </span>
-            <div className="grid grid-cols-2 gap-3 mt-1 text-center">
-              <div className="bg-zinc-950/80 p-3 rounded-xl border border-zinc-900">
-                <div className="text-[8px] font-bold text-zinc-500 uppercase">Hôm nay thực tế</div>
-                <div className="text-lg font-mono font-black text-amber-400 mt-1">{todayTDEE} <span className="text-[9px] text-zinc-500 font-normal">kcal</span></div>
+          <div className="gradient-border rounded-2xl p-3.5 bg-cardBg/90 flex flex-col gap-3 shadow-xl">
+            <div className="flex flex-col gap-2 border-b border-zinc-800 pb-2">
+              <div className="flex justify-between items-center"><span className="text-[10px] font-black uppercase text-purple-400 flex items-center gap-1.5"><TrendingUp size={14} /> Thống kê Progressive Overload</span><button onClick={openOverloadEditModal} className="p-1 px-2 bg-zinc-950 text-zinc-400 hover:text-purple-400 border border-zinc-800 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 cursor-pointer"><Edit3 size={10} /> Sửa số liệu tập</button></div>
+              <select value={selectedOverloadExercise} onChange={(e) => setSelectedOverloadExercise(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2 text-xs font-bold text-zinc-200 focus:outline-none">
+                <option value="bp">🏋️ Ngực: Benchpress (Barbell)</option><option value="sq">🦵 Chân: Squat (Back Squat)</option><option value="dl">💪 Lưng: Deadlift (Conventional)</option><option value="op">✈️ Vai: Overhead Press (Military)</option>
+              </select>
+            </div>
+            <div className="w-full h-28 overflow-x-auto overflow-y-hidden custom-scrollbar">
+              <div className="min-w-[440px] h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={currentOverloadDataset()} margin={{ top: 10, right: 10, left: -35, bottom: 5 }}>
+                    <defs><linearGradient id="colorOverload" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/><stop offset="95%" stopColor="#a855f7" stopOpacity={0}/></linearGradient></defs>
+                    <XAxis dataKey="label" tick={{fontSize: 8, fill: '#a1a1aa', fontWeight: 'bold'}} axisLine={false} tickLine={false} />
+                    <YAxis domain={['dataMin - 10', 'dataMax + 10']} hide={true} />
+                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: 9 }} />
+                    <Area type="monotone" dataKey="weight" stroke="#a855f7" strokeWidth={2.5} fillOpacity={1} fill="url(#colorOverload)" connectNulls={true} dot={{ fill: '#a855f7', r: 2.5 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <div className="bg-zinc-950/80 p-3 rounded-xl border border-zinc-900">
-                <div className="text-[8px] font-bold text-zinc-500 uppercase">Thứ đang xem lịch</div>
-                <div className="text-lg font-mono font-black text-zinc-300 mt-1">{selectedDayTDEE} <span className="text-[9px] text-zinc-500 font-normal">kcal</span></div>
-              </div>
+            </div>
+            <div className="flex items-center justify-center gap-8 bg-zinc-950 py-1.5 rounded-xl border border-zinc-900/60">
+              <button onClick={() => setSelectedOverloadYear((Number(selectedOverloadYear)-1).toString())} className="p-1 px-2 rounded-lg border border-zinc-800 text-zinc-400 cursor-pointer"><ChevronLeft size={14} strokeWidth={3} /></button>
+              <span className="text-xs font-black font-mono tracking-widest text-zinc-200">Năm {selectedOverloadYear}</span>
+              <button onClick={() => setSelectedOverloadYear((Number(selectedOverloadYear)+1).toString())} className="p-1 px-2 rounded-lg border border-zinc-800 text-zinc-400 cursor-pointer"><ChevronRight size={14} strokeWidth={3} /></button>
             </div>
           </div>
 
-          {/* MỤC 3: BIỂU ĐỒ TẬP LUYỆN VOLUME */}
           <div className="gradient-border rounded-2xl p-3.5 bg-cardBg/90 flex flex-col gap-2 shadow-xl">
-            <span className="text-[10px] font-black uppercase text-zinc-400 flex items-center gap-1.5 border-b border-zinc-800 pb-2"><ChartIcon size={14} className="text-cyberBlue" /> Biểu đồ tập luyện (Volume/Ngày)</span>
-            <div className="w-full h-28 mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={WORKOUT_VOLUME_DATA}>
-                  <defs>
-                    <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0066ff" stopOpacity={0.3}/><stop offset="95%" stopColor="#0066ff" stopOpacity={0}/></linearGradient>
-                  </defs>
-                  <XAxis dataKey="day" tick={{fontSize: 8, fill: '#52525b'}} stroke="#27272a" />
-                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: 10 }} />
-                  <Area type="monotone" dataKey="volume" stroke="#0066ff" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
+              <span className="text-[10px] font-black uppercase text-cyberBlue flex items-center gap-1.5">
+                <ChartIcon size={14} className="text-cyberBlue" /> Biểu đồ hiệu suất tuần
+              </span>
+              <span className="text-[8px] font-bold text-zinc-500 lowercase tracking-wide bg-zinc-950 px-2 py-0.5 border border-zinc-900 rounded-md">
+                (reps = tổng số reps trong tuần)
+              </span>
+            </div>
+            
+            <div className="w-full h-28 mt-2 overflow-x-auto overflow-y-hidden custom-scrollbar">
+              <div className="min-w-[480px] h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={muscleVolumeDataset} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <XAxis dataKey="muscle" tick={{fontSize: 7.5, fill: '#a1a1aa', fontWeight: 'black'}} axisLine={false} tickLine={false} />
+                    <YAxis hide={true} />
+                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: 10 }} />
+                    <Bar dataKey="volume" name="Tổng Số Reps" fill="#0066ff" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
-          {/* MỤC 4: PROGRESSIVE OVERLOAD */}
-          <div className="gradient-border rounded-2xl p-3.5 bg-cardBg/90 flex flex-col gap-2 shadow-xl">
-            <span className="text-[10px] font-black uppercase text-zinc-400 flex items-center gap-1.5 border-b border-zinc-800 pb-2"><TrendingUp size={14} className="text-purple-500" /> Progressive Overload (Benchpress tạ tăng tiến)</span>
-            <div className="w-full h-28 mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={PROGRESSIVE_OVERLOAD_DATA}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#18181b" />
-                  <XAxis dataKey="week" tick={{fontSize: 8, fill: '#52525b'}} stroke="#27272a" />
-                  <YAxis domain={[40, 70]} tick={{fontSize: 8, fill: '#52525b'}} stroke="#27272a" />
-                  <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: 10 }} />
-                  <Line type="linear" dataKey="weight" stroke="#a855f7" strokeWidth={3} dot={{ fill: '#a855f7', r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* MODAL EDIT CÂN NẶNG */}
+      {isEditWeightModalOpen && (
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 h-[480px]">
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-2"><h3 className="text-xs font-black uppercase text-deepRed">Sửa cân nặng {selectedChartYear}</h3><button onClick={() => setIsEditWeightModalOpen(false)} className="text-zinc-500"><X size={16} /></button></div>
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              {tempWeightList.map(item => (
+                <div key={item.id} className="flex items-center justify-between bg-zinc-950 p-2 rounded-xl border border-zinc-900">
+                  <span className="text-xs font-bold text-zinc-400">{item.month}</span>
+                  <div className="flex items-center gap-1.5"><input type="number" step="0.1" value={item.weight || ''} placeholder="Trống" onChange={(e) => setTempWeightList(prev => prev.map(x => x.id === item.id ? { ...x, weight: e.target.value === '' ? '' : Number(e.target.value) } : x))} className="w-20 bg-zinc-900 border border-zinc-800 rounded-lg text-center font-mono text-xs py-1 text-white focus:outline-none" /><span className="text-[10px] text-zinc-600 font-mono">KG</span></div>
+                </div>
+              ))}
+            </div>
+            <button onClick={saveWeightHistory} className="w-full bg-deepRed text-white py-2.5 rounded-xl font-black text-xs uppercase">Lưu chỉ số</button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDIT OVERLOAD */}
+      {isEditOverloadModalOpen && (
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 h-[480px]">
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-2"><h3 className="text-xs font-black uppercase text-purple-400">Sửa mức tạ {selectedOverloadYear}</h3><button onClick={() => setIsEditOverloadModalOpen(false)} className="text-zinc-500"><X size={16} /></button></div>
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              {tempOverloadList.map(item => (
+                <div key={item.id} className="flex items-center justify-between bg-zinc-950 p-2 rounded-xl border border-zinc-900">
+                  <span className="text-xs font-bold text-zinc-400">{item.month}</span>
+                  <div className="flex items-center gap-1.5"><input type="number" step="0.5" value={item.weight || ''} placeholder="Trống" onChange={(e) => setTempOverloadList(prev => prev.map(x => x.id === item.id ? { ...x, weight: e.target.value === '' ? '' : Number(e.target.value) } : x))} className="w-20 bg-zinc-900 border border-zinc-800 rounded-lg text-center font-mono text-xs py-1 text-white focus:outline-none" /><span className="text-[10px] text-zinc-600 font-mono">KG</span></div>
+                </div>
+              ))}
+            </div>
+            <button onClick={saveOverloadHistory} className="w-full bg-purple-600 text-white py-2.5 rounded-xl font-black text-xs uppercase">Lưu số liệu</button>
+          </div>
+        </div>
+      )}
     </div>
   );
-  
 }

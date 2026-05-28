@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- dải màu gradient từ Đỏ neon sang Xanh neon đúng tinh thần của app -->
+    <linearGradient id="cyberGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#0066ff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background bo góc màu tối đặc trưng -->
+  <rect width="512" height="512" rx="128" fill="#09090b" />
+
+  <!-- Vòng tròn năng lượng bọc ngoài dạng nét đứt tăng tính công nghệ -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#cyberGradient)" stroke-width="12" stroke-dasharray="25 15" />
+
+  <!-- Thiết kế quả tạ (Dumbbell) ở trung tâm -->
+  <g fill="#ffffff">
+    <!-- Thanh đòn nối giữa -->
+    <rect x="106" y="216" width="300" height="80" rx="20" />
+    
+    <!-- Bánh tạ bên trái (Tone màu Đỏ) -->
+    <rect x="66" y="166" width="50" height="180" rx="15" fill="#ef4444" />
+    <rect x="26" y="196" width="30" height="120" rx="10" fill="#ef4444" />
+    
+    <!-- Bánh tạ bên phải (Tone màu Xanh) -->
+    <rect x="396" y="166" width="50" height="180" rx="15" fill="#0066ff" />
+    <rect x="456" y="196" width="30" height="120" rx="10" fill="#0066ff" />
+  </g>
+
+  <!-- Chữ "DZ" bản sắc thương hiệu nằm đè chính giữa quả tạ -->
+  <g fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="76" font-style="italic">
+    <text x="256" y="282" text-anchor="middle">DZ</text>
+  </g>
+</svg>
